@@ -1,0 +1,6 @@
+[package]
+name = "caches"
+version = "0.1.0"
+authors = ["Zach Mitchell <zmitchell@fastmail.com>"]
+
+[dependencies]
