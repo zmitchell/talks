@@ -11,19 +11,19 @@ Zach Mitchell
 
 ---
 
-## **polsim** provides a simple, declarative way to simulate the polarization of a laser.
+# polsim
+
+## CLI tool for *pol*arization *sim*ulations
 
 ---
 
-# Huh?
+# Project structure
 
-- Light in a laser is *polarized*
-- Interactions change the polarization of the beam
-    - Reflection from a surface
-    - Transmission through a surface
-    - Various optical elements
-
-^ I'll keep the physics to a minimum, but some background is necessary.
+- `polarization`
+    - Crate I wrote for the polarization simulations
+    - Uses a technique called Jones calculus
+- `polsim`
+    - Provides a CLI for `polarization`
 
 ---
 
@@ -33,34 +33,21 @@ Zach Mitchell
 
 ^ The polarization is defined as how the light oscillates perpendicular to the direction that it's traveling.
 
-^ You can see that the polarization changes as the beam passes through these elements.
+^ You can see that the polarization changes from one form to another as it passes through these elements.
 
-^ That's what I'm modeling.
+^ What we want to do is predict how our beam is going to look after interacting with several of these elements.
 
----
+^ We can also use this to say "this is how my polarization looks, what could make it look this way?"
 
-# Project structure
-
-- `polarization`
-    - Crate I wrote for the polarization simulations
-- `polsim`
-    - Provides a CLI for `polarization`
-
----
-
-# Modeling polarization
-
-There are standard techniques for this.
-- Jones calculus (simpler, what I'm using)
-- Mueller calculus
-
-### Don't reinvent the wheel!
+^ We use a technique called Jones calculus to model these interactions.
 
 ---
 
 # Jones calculus primer
 
 Polarization is a vector with two components:
+
+^ A vector is basically a matrix with one column.
 
 $$
 \vec{E} = \begin{bmatrix} A \\ B e^{i\delta} \end{bmatrix} = \begin{bmatrix} \text{complex number} \\ \text{complex number} \end{bmatrix}
@@ -90,6 +77,14 @@ $$
 
 When you get down to it, you're just multiplying 2x2 matrices.
 
+^ You start with your initial beam on the right.
+
+^ You encounter the matrices of your optical elements in order as you travel left to right.
+
+^ You end up with the final beam on the left.
+
+^ In principle you could do all of this by hand, and some people do.
+
 ---
 
 # Those matrices can be pretty ugly...
@@ -103,6 +98,8 @@ $$
 
 No one has ever used this matrix without looking it up
 
+^ The goal with polsim is to lower the barrier of entry for doing these simulations.
+
 ---
 
 # Translation to Rust
@@ -114,21 +111,234 @@ No one has ever used this matrix without looking it up
 - Matrices
     - `nalgebra::Matrix2<T>`
 
+^ num::complex is the most mature, full-featured option for complex numbers at the moment.
+
+^ Lots of options for linear algebra libraries (nalgebra, ndarray, vecmath, cgmath, etc).
+
+^ Many crates are tailored towards graphics/games.
+
+^ ndarray is Rust's current analog of NumPy, but nalgebra is more targeted at the kinds of matrix operations I'm doing.
+
 ---
 
-# num::complex::Complex
+# Struggle #1 - debugging
 
-Easily the most mature crate for complex numbers
+[.code-highlight: 1]
+[.code-highlight: 2-5]
+[.code-highlight: 4]
+
+```
+(lldb) br set -f system.rs -l 348
+Breakpoint 1: where = polarization-b20b1f754e235950`polarization
+::jones::system::OpticalSystem::composed_elements
+::_$u7b$$u7b$closure$u7d$$u7d$
+::h19d2e65336af7615 + 577 at system.rs:348:30, address = 0x00000001001e8c11
+```
 
 ---
 
-# Linear algebra libraries
+# Struggle #2 - debugging nalgebra
 
-- Lots of options
-    - `nalgebra`, `ndarray`, `vecmath`, `cgmath`, ...
-- Many are designed specifically for games/graphics
-- `nalgebra` and `ndarray` seem more applicable for general use.
-- `nalgebra` seemed more tailored to my requirements.
+[.code-highlight: all]
+[.code-highlight: 5-7]
+
+```
+Process 33329 stopped
+* thread #2, name = 'jones::system::test::test_beam_passes_through', stop reason = breakpoint 1.1
+    frame #0: 0x00000001001e8c11 polarization-b20b1f754e235950`polarization::jones::system::OpticalSystem
+    ::composed_elements::_$u7b$$u7b$closure$u7d$$u7d$::h19d2e65336af7615((null)=0x000070000ef72f98,
+    acc=Matrix<num_complex::Complex<f64>, nalgebra::base::dimension::U2, nalgebra::base::dimension::U2,
+    nalgebra::base::matrix_array::MatrixArray<num_complex::Complex<f64>, nalgebra::base::dimension::U2,
+    nalgebra::base::dimension::U2>> @ 0x000070000ef73030, elem=0x0000000100c16aa0) at system.rs:348:30
+```
+
+Half of this debug message is just about the type of the matrix!
+
+---
+
+# Struggle #2 - debugging nalgebra
+
+```
+(lldb) fr v
+(closure *)  = 0x000070000ef72f98
+(nalgebra::base::matrix::Matrix<num_complex::Complex<double>, nalgebra::base::dimension::U2,
+nalgebra::base::dimension::U2, nalgebra::base::matrix_array::MatrixArray<num_complex::Complex<double>,
+nalgebra::base::dimension::U2, nalgebra::base::dimension::U2> >) acc = {
+  data = {
+    data = {
+      data = {
+        parent1 = {
+          parent1 = {
+            parent1 = <Unable to determine byte size.>
+
+            parent2 = <Unable to determine byte size.>
+
+            data = (re = 1, im = 0)
+          }
+          parent2 = {
+            parent1 = <Unable to determine byte size.>
+
+            parent2 = <Unable to determine byte size.>
+
+            data = (re = 0, im = 0)
+          }
+          _marker = {}
+        }
+        parent2 = {
+          parent1 = {
+            parent1 = <Unable to determine byte size.>
+
+            parent2 = <Unable to determine byte size.>
+
+            data = (re = 0, im = 0)
+          }
+          parent2 = {
+            parent1 = <Unable to determine byte size.>
+
+            parent2 = <Unable to determine byte size.>
+
+            data = (re = 1, im = 0)
+          }
+          _marker = {}
+        }
+        _marker = {}
+      }
+    }
+  }
+  _phantoms = {}
+}
+(polarization::jones::system::OpticalElement *) elem = 0x0000000100c16aa0
+(nalgebra::base::matrix::Matrix<num_complex::Complex<double>, nalgebra::base::dimension::U2,
+nalgebra::base::dimension::U2, nalgebra::base::matrix_array::MatrixArray<num_complex::Complex<double>,
+nalgebra::base::dimension::U2, nalgebra::base::dimension::U2> >) mat = {
+  data = {
+    data = {
+      data = {
+        parent1 = {
+          parent1 = {
+            parent1 = <Unable to determine byte size.>
+
+            parent2 = <Unable to determine byte size.>
+
+            data = (re = 1, im = 0)
+          }
+          parent2 = {
+            parent1 = <Unable to determine byte size.>
+
+            parent2 = <Unable to determine byte size.>
+
+            data = (re = 0, im = 0)
+          }
+          _marker = {}
+        }
+        parent2 = {
+          parent1 = {
+            parent1 = <Unable to determine byte size.>
+
+            parent2 = <Unable to determine byte size.>
+
+            data = (re = 0, im = 0)
+          }
+          parent2 = {
+            parent1 = <Unable to determine byte size.>
+
+            parent2 = <Unable to determine byte size.>
+
+            data = (re = 1, im = 0)
+          }
+          _marker = {}
+        }
+        _marker = {}
+      }
+    }
+  }
+  _phantoms = {}
+}
+```
+
+---
+
+#[fit] Zoom
+
+---
+
+# Struggle #2 - debugging nalgebra
+
+[.code-highlight: all]
+[.code-highlight: 13, 20, 30, 37]
+
+```
+(nalgebra::base::matrix::Matrix<num_complex::Complex<double>, nalgebra::base::dimension::U2, 
+nalgebra::base::dimension::U2, nalgebra::base::matrix_array::MatrixArray<num_complex::Complex<double>,
+nalgebra::base::dimension::U2, nalgebra::base::dimension::U2> >) mat = {
+  data = {
+    data = {
+      data = {
+        parent1 = {
+          parent1 = {
+            parent1 = <Unable to determine byte size.>
+
+            parent2 = <Unable to determine byte size.>
+
+            data = (re = 1, im = 0)
+          }
+          parent2 = {
+            parent1 = <Unable to determine byte size.>
+
+            parent2 = <Unable to determine byte size.>
+
+            data = (re = 0, im = 0)
+          }
+          _marker = {}
+        }
+        parent2 = {
+          parent1 = {
+            parent1 = <Unable to determine byte size.>
+
+            parent2 = <Unable to determine byte size.>
+
+            data = (re = 0, im = 0)
+          }
+          parent2 = {
+            parent1 = <Unable to determine byte size.>
+
+            parent2 = <Unable to determine byte size.>
+
+            data = (re = 1, im = 0)
+          }
+          _marker = {}
+        }
+        _marker = {}
+      }
+    }
+  }
+  _phantoms = {}
+}
+```
+
+---
+
+#[fit] Enhance!
+
+---
+
+# Struggle #2 - debugging nalgebra
+
+The elements of a 2x2 matrix...
+
+```
+...
+data = (re = 1, im = 0)
+...
+data = (re = 0, im = 0)
+...
+data = (re = 0, im = 0)
+...
+data = (re = 1, im = 0)
+...
+```
+
+Information density is very low in debug output
 
 ---
 
@@ -155,22 +365,20 @@ pub trait JonesVector {
 
 # Beam
 
-^ I make a container for the vector so I can implement my own methods on it.
-
 ```rust
 // Basically a container for the Vector2<T>
 pub struct Beam {
     vec: Vector2<Complex<f64>>,
 }
 
-impl Beam {
-    // mostly convenience methods
-}
-
 impl JonesVector for Beam {
     ...
 }
 ```
+
+^ The implementation isn't actually generic yet.
+
+^ There's no impl JonesVector anywhere, but that's the plan eventually.
 
 ---
 
@@ -190,6 +398,10 @@ pub trait JonesMatrix {
 }
 ```
 
+^ The behavior of an element is specific, so the trait doesn't need to cover much.
+
+^ I could implement a parameter sweep by returning a different matrix from an element each time the matrix is asked for inside of an iterator.
+
 ---
 
 # Optical elements
@@ -200,10 +412,6 @@ Optical elements implement `JonesMatrix`
 // An ideal linear polarizer
 pub struct Polarizer {
     mat: Matrix2<Complex<f64>>,
-}
-
-impl Polarizer {
-    // convenience methods
 }
 
 impl JonesMatrix for Polarizer {
@@ -233,7 +441,7 @@ let final_beam = system.propagate().unwrap();
 # Testing
 
 - This is science
-- Results should be
+- Results should be:
     - reproducible
     - correct
     - etc
@@ -252,7 +460,16 @@ let final_beam = system.propagate().unwrap();
     - "The sum of 2 and 2 should be 4."
 - Property based tests
     - "The sum of positive integers **x** and **y** should be positive."
-    - "The sum of positive integers **x** and **y** should be greater than both **x** and **y**."
+    - **x** and **y** are typically randomly generated
+    - The test is run with many randomly generated inputs
+
+^ Unit tests are quick and easy to throw together
+
+^ PBT is more rigorous, but more computationally expensive
+
+^ Not always easy to find general properties for your program
+
+^ Physics has lots of rules for what should/shouldn't happen
 
 ---
 
@@ -316,6 +533,54 @@ impl Arbitrary for Polarizer {
 
 ---
 
+# Struggle #3 - floating point numbers
+
+This happened several times:
+- Test fails
+
+---
+
+# Struggle #3 - floating point numbers
+
+This happened several times:
+- Test fails
+- Debug the code
+
+---
+
+![fit](pablo.jpg)
+
+---
+
+# Struggle #3 - floating point numbers
+
+This happened several times:
+- Test fails
+- Debug the code
+- Realize the test is broken
+
+---
+
+# Struggle #3 - floating point numbers
+
+```rust 
+let x = ...; // randomly generated
+loop {
+    if x > pi / 2.0 {
+        x -= pi;
+        continue;
+    } else if x < -pi / 2.0 {
+        x += pi;
+        continue;
+    }
+    break;
+}
+```
+
+Hangs because `x = 5.1e+164` and `5.1e+164 + pi = 5.1e+164`
+
+---
+
 # polsim
 
 High level overview
@@ -325,6 +590,11 @@ High level overview
 - The simulation is performed.
 - The results are printed.
 
+---
+
+# Documentation
+
+![inline,fit](docs.png)
 
 ---
 
@@ -347,33 +617,11 @@ angle = 0
 angle_units = "degrees"
 ```
 
-^ There's a section for the beam.
+^ The "polarization" key defines what keys should follow it in the beam definition.
 
-^ Each element is defined separately and in the order the beam should pass through them.
+^ Same idea for the "element_type" key.
 
 ---
-
-# Simulation definition
-
-```rust
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct SystemDef {
-    pub beam: BeamDef,
-    pub elements: Vec<ElemDef>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct ElemDef {
-    pub element_type: ElemType,
-    pub phase: Option<f64>,
-    pub phase_units: Option<AngleType>,
-    pub angle: Option<f64>,
-    pub angle_units: Option<AngleType>,
-}
-```
-
---- 
 
 # Beam definition
 
@@ -391,6 +639,8 @@ pub struct BeamDef {
     pub handedness: Option<HandednessType>,
 }
 ```
+
+^ Lots of optional fields because the beam can be defined many different ways.
 
 ---
 
@@ -454,8 +704,41 @@ error: invalid system definition
 caused by: invalid element definition
 caused by: invalid polarizer definition
 caused by: invalid angle definition
-caused by: missing parameter in definition: 'units'
+caused by: missing parameter in definition: 'angle_units'
 ```
 
 ^ Doesn't tell you *which* polarizer is the problem, though.
 
+---
+
+# Output
+
+Pretty basic at the moment:
+
+```
+$ polsim examples/circular_polarizer.toml
+intensity: 5.00000e-1
+x_mag: 5.00000e-1
+x_phase: 0.00000e0
+y_mag: 5.00000e-1
+y_phase: 1.57080e0
+```
+
+---
+
+# Next steps
+
+![right 90%](ellipse.png)
+
+- Gnuplot output
+- Rust 2018
+- Parameter sweeps
+
+---
+
+# Resources
+
+- github.com/zmitchell/polsim
+- github.com/zmitchell
+- tinkering.xyz
+- zmitchell at fastmail dot com
