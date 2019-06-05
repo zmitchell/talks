@@ -579,6 +579,8 @@ loop {
 
 Hangs because `x = 5.1e+164` and `5.1e+164 + pi = 5.1e+164`
 
+^ It's my own fault for not restricting the scope of the randomly generated numbers, but I still spent time figuring that out.
+
 ---
 
 # polsim
@@ -724,6 +726,17 @@ y_mag: 5.00000e-1
 y_phase: 1.57080e0
 ```
 
+or
+
+```
+$ polsim --table examples/circular_polarizer.toml
++------------+------------+-----------+------------+-----------+
+| intensity  | x_mag      | x_phase   | y_mag      | y_phase   |
++------------+------------+-----------+------------+-----------+
+| 5.00000e-1 | 5.00000e-1 | 0.00000e0 | 5.00000e-1 | 1.57080e0 |
++------------+------------+-----------+------------+-----------+
+```
+
 ---
 
 # Next steps
@@ -731,12 +744,13 @@ y_phase: 1.57080e0
 ![right 90%](ellipse.png)
 
 - Gnuplot output
+- Missing optical elements (reflections)
 - Rust 2018
 - Parameter sweeps
 
 ---
 
-# Resources
+# Contact
 
 - github.com/zmitchell/polsim
 - github.com/zmitchell
