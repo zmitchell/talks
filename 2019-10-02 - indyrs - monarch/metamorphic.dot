@@ -1,0 +1,11 @@
+digraph M {
+    // rankdir = "LR";
+
+    seed -> transformations;
+    transformations -> computation;
+    seed -> computation;
+    computation -> "output from\n seed";
+    computation -> "output from\n transformations";
+    "output from\n seed" -> relation;
+    "output from\n transformations" -> relation;
+}
