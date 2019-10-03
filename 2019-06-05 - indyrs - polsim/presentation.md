@@ -592,11 +592,6 @@ High level overview
 - The simulation is performed.
 - The results are printed.
 
----
-
-# Documentation
-
-![inline,fit](docs.png)
 
 ---
 
