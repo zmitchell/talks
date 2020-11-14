@@ -1,0 +1,11 @@
+digraph M {
+    known_input [label="known input"];
+    known_output [label="expected output"];
+    test_output [label="computed output"];
+    computation [style=filled];
+    compare [style=filled];
+    known_input -> computation;
+    computation -> test_output;
+    {test_output, known_output} -> compare;
+    compare -> result;
+}

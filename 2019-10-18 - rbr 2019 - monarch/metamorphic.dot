@@ -1,0 +1,9 @@
+digraph M {
+    transformations [style=filled];
+    computation [style=filled];
+    trans_input [label="transformed\ninput"];
+    trans_output [label="transformed\noutput"];
+    relation [label="evaluate\nrelation", style=filled];
+    input -> transformations -> trans_input;
+    {input, trans_input} -> computation -> {output, trans_output} -> relation -> result;
+}

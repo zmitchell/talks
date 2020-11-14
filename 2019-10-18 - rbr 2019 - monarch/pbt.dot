@@ -1,0 +1,10 @@
+digraph M {
+    generate [label="generate input", style=filled];
+    filter [style=filled];
+    computation [style=filled];
+    property [label="inspect output", style=filled];
+
+    generate -> filter -> input -> computation -> output -> property -> result;
+    filter -> generate;
+    result -> generate [label="repeat\n1000x"];
+}
