@@ -2,6 +2,10 @@
 
 This is a repository of various talks that I've given. The slides are typically created using [Deckset](https://www.deckset.com/), a macOS application that turns Markdown into slides.
 
+Only some of my talks have been recorded, those are listed below:
+- [PyOhio 2018 - Annotation Abuse](https://youtu.be/sCChedxFCuo?t=142)
+- [Rust Belt Rust 2019 - Monarch](https://www.youtube.com/watch?v=RdpHONoFsSs&list=PLgC1L0fKd7UkVwjVlOySfMnn80Qs5TOLb&index=9)
+
 ## License
 
 Licensed under either of
