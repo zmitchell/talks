@@ -1,0 +1,139 @@
+{
+  "lockfile-version": 1,
+  "manifest": {
+    "version": 1,
+    "install": {
+      "presenterm": {
+        "pkg-path": "presenterm"
+      }
+    },
+    "hook": {},
+    "profile": {},
+    "options": {
+      "systems": [
+        "aarch64-darwin",
+        "aarch64-linux",
+        "x86_64-darwin",
+        "x86_64-linux"
+      ]
+    }
+  },
+  "packages": [
+    {
+      "attr_path": "presenterm",
+      "broken": false,
+      "derivation": "/nix/store/ifhasnsbrf2zjw8pzrini3l6ks2hwm4z-presenterm-0.12.0.drv",
+      "description": "Terminal based slideshow tool",
+      "install_id": "presenterm",
+      "license": "BSD-2-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=063dece00c5a77e4a0ea24e5e5a5bd75232806f8",
+      "name": "presenterm-0.12.0",
+      "pname": "presenterm",
+      "rev": "063dece00c5a77e4a0ea24e5e5a5bd75232806f8",
+      "rev_count": 780010,
+      "rev_date": "2025-04-06T18:34:07Z",
+      "scrape_date": "2025-04-08T01:14:46.487325Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.12.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/iwys99ylfc69lvhvc488qhgy2db4pzj1-presenterm-0.12.0"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "presenterm",
+      "broken": false,
+      "derivation": "/nix/store/zlgc35bb087bmhwp329xfdhp1qs4nc57-presenterm-0.12.0.drv",
+      "description": "Terminal based slideshow tool",
+      "install_id": "presenterm",
+      "license": "BSD-2-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=063dece00c5a77e4a0ea24e5e5a5bd75232806f8",
+      "name": "presenterm-0.12.0",
+      "pname": "presenterm",
+      "rev": "063dece00c5a77e4a0ea24e5e5a5bd75232806f8",
+      "rev_count": 780010,
+      "rev_date": "2025-04-06T18:34:07Z",
+      "scrape_date": "2025-04-08T01:35:49.651309Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.12.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/clmrx79n7kmbc5vcnssq256j0wcj3z5x-presenterm-0.12.0"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "presenterm",
+      "broken": false,
+      "derivation": "/nix/store/yxn9qga2pigw8x84v8khn91s7lq3w5z8-presenterm-0.12.0.drv",
+      "description": "Terminal based slideshow tool",
+      "install_id": "presenterm",
+      "license": "BSD-2-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=063dece00c5a77e4a0ea24e5e5a5bd75232806f8",
+      "name": "presenterm-0.12.0",
+      "pname": "presenterm",
+      "rev": "063dece00c5a77e4a0ea24e5e5a5bd75232806f8",
+      "rev_count": 780010,
+      "rev_date": "2025-04-06T18:34:07Z",
+      "scrape_date": "2025-04-08T01:54:15.908889Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.12.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/pa5rvly0p2g4x2xvb4xhi1vaygnwcpk7-presenterm-0.12.0"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "presenterm",
+      "broken": false,
+      "derivation": "/nix/store/br9w7h5jhild86p80flpgv1rsl54clna-presenterm-0.12.0.drv",
+      "description": "Terminal based slideshow tool",
+      "install_id": "presenterm",
+      "license": "BSD-2-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=063dece00c5a77e4a0ea24e5e5a5bd75232806f8",
+      "name": "presenterm-0.12.0",
+      "pname": "presenterm",
+      "rev": "063dece00c5a77e4a0ea24e5e5a5bd75232806f8",
+      "rev_count": 780010,
+      "rev_date": "2025-04-06T18:34:07Z",
+      "scrape_date": "2025-04-08T02:16:39.077406Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.12.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/kj86l41iy1r71r7hx07xjqp0xzaqjm82-presenterm-0.12.0"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    }
+  ]
+}
