@@ -9,50 +9,20 @@ slidenumbers: true
 
 # Today's lesson
 
-- What is a developer environment?
 - How does `nix develop` work?
 - What if we want more?
-  - `flox activate`
-  - How it's implemented
-  - Why `fish` is objectively the best shell
+- `flox activate`
+- Why `fish` is objectively the best shell
 
 ---
 
 # The environment
 
-- Filesystem + environment = observable universe for programs
-- Control the environment = control what’s observable
-- Read by tools for runtime configuration
-- A second channel for passing arguments when `argv` isn’t an option
-
----
-
-# Isolation
-
-- Varying levels of separation with the host system
-- Full isolation -> nothing from the host is available
-- Partial -> workspace resources preferred over similar resources on the system
-- YOLO -> I needed `libfoo.so` so I downloaded it from `trustme.bro` and copied it into `/usr/lib`. Idk if there was one there already.
-
----
-
-# Reproducible shells, or "devshells"
-
-- "Just" a process
-  - No virtualization
-  - No fancy kernel features like namespaces, cgroups, etc
-  - No isolation from the filesystem
-
----
-
-# Reproducible shells, or "devshells"
-
-- Construction
-  - Dependencies are collected (mostly) deterministically
-  - Shell environment is carefully controlled
-  - Filesystem is manipulated via symlinks
-
-Remember that environment + filesystem = observable universe
+- Filesystem + environment = observable universe
+- Control them both = control what’s observable
+- Strategy
+  - Deterministically set the environment
+  - Manipulate filesystem via symlinks
 
 ---
 
@@ -61,29 +31,30 @@ Remember that environment + filesystem = observable universe
 
 ---
 
-# What happens when you type `nix develop`?
+![fit](./images/diagrams/nix-develop.png)
 
-```mermaid
-flowchart TB
-    subgraph nix
-        B[nix develop] --> C([get derivation])
-        C --> D([get build environment])
-        D --> E([create Bash script])
-        E --> F([exec Bash script])
-    end
-    A[user shell] -->|fork| nix
-    nix -->|exec| Bash
-```
+---
+
+# If you want to see for yourself
+
+In `develop.cc`
+- `CmdDevelop::run`
+- `getBuildEnvironment`
+- `getDerivationEnvironment`
+- `struct BuildEnvironment`
+- `makeRcScript`
+- `getShellOutpath`
 
 ---
 
 # Trivia!
 
-`nix-shell` and `nix develop` were/are designed for debugging builds, which is why they both recreate the _build environment_ of a derivation by default.
+- `nix-shell` and `nix develop`
+  - Designed for debugging builds
+  - Both recreate the _build environment_ of a derivation
+  - Not the same as a general purpose developer environment
 
-Experiment: try running `buildPhase` inside `nix develop`
-
-This is different from creating a general purpose "developer environment"!
+Try running `buildPhase` inside `nix develop`
 
 ---
 
@@ -110,72 +81,21 @@ At a minimum, the latter option can be achieved with a build phase that runs:
      cargo build --release --message-format json-render-diagnostics >"$cargoBuildLog"
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ```
----
-
-# What happens when you type `nix develop`?
-
-```mermaid
-flowchart TB
-    subgraph nix
-        B[nix develop] --> C([get derivation])
-        C --> D([get build environment])
-        D --> E([create Bash script])
-        E --> F([exec Bash script])
-    end
-    A[user shell] -->|fork| nix
-    nix -->|exec| Bash
-```
 
 ---
 
-# What happens when you type `nix develop`?
+# First steps
 
-```mermaid
-flowchart TB
-    subgraph nix
-        B[nix develop] --> C([get derivation])
-        C --> D{{get build environment}}
-        D --> E([create Bash script])
-        E --> F([exec Bash script])
-    end
-    A[user shell] -->|fork| nix
-    nix -->|exec| Bash
-```
+- Run `nix develop .#foo`
+- Find the derivation for `foo`
 
 ---
 
-# Getting the build environment
-
-```mermaid
-flowchart LR
-    subgraph derivation
-        direction TB
-        builder[builder: bash]
-        args["args: [someScript.sh]"]
-        buildInputs["buildInputs: ..."]
-        ...
-    end
-```
-
-- Every derivation has a builder and a list of arguments.
-- Normally they build the derivation outputs
+![fit](./images/diagrams/drv-transform.png)
 
 ---
 
-# Getting the build environment
-
-```mermaid
-flowchart LR
-    subgraph derivation
-        direction TB
-        builder[builder: bash]
-        args["args: [get-env.sh]"]
-        buildInputs["buildInputs: ..."]
-        ...
-    end
-```
-
-- `nix develop` replaces the args with a `get-env.sh` script.
+![fit](./images/diagrams/env-json.png)
 
 ---
 
@@ -274,7 +194,7 @@ printf "}"
 
 ---
 
-![inline fill](images/dore_evil_counselors.jpg)
+![inline fill](images/dore_pouting_lucifer.jpg)
 
 ---
 
@@ -287,16 +207,12 @@ $ nix print-dev-env --json
 ```json
 {
   "bashFunctions": {
-    "myFunction": "<body>"
+    "myFunc": "...body..."
   },
   "variables": {
-    "BASH": {
-      "type": "var",
-      "value": "/nix/store/nravshvfviv75plf26nwfwzg8ldl3z8s-bash-5.2p37/bin/bash"
-    },
     "CC": {
       "type": "exported",
-      "value": "clang"
+      "value": "/nix/store/..."
     },
   }
 }
@@ -304,63 +220,22 @@ $ nix print-dev-env --json
 
 ---
 
-# Finally...
-
-- Parse the JSON into a `BuildEnvironment`
+![fit](./images/diagrams/develop-script.png)
 
 ---
 
-# What happens when you type `nix develop`?
-
-```mermaid
-flowchart TB
-    subgraph nix
-        B[nix develop] --> C([get derivation])
-        C --> D{{get build environment}}
-        D --> E([create Bash script])
-        E --> F([exec Bash script])
-    end
-    A[user shell] -->|fork| nix
-    nix -->|exec| Bash
-```
+![fit](./images/diagrams/script-mode.png)
 
 ---
 
-# If you want to see for yourself
+# "Just exec your shell"
 
-In `develop.cc`
-- `CmdDevelop::run`
-- `getBuildEnvironment`
-- `struct BuildEnvironment`
-- `getShellOutpath`
-- `getDerivationEnvironment`
-
----
-
-# What happens when you type `nix develop`?
-
-```mermaid
-flowchart TB
-    subgraph nix
-        B[nix develop] --> C([get derivation])
-        C --> D([get build environment])
-        D --> E{{create Bash script}}
-        E --> F([exec Bash script])
-    end
-    A[user shell] -->|fork| nix
-    nix -->|exec| Bash
-```
-
----
-
-# Making the shell script (outline)
-
-- Start building up a script in a string buffer
-- Translate the `BuildEnvironment` back into Bash syntax
-- Rewrite any occurences of output paths
-- Make modifications based on mode
-  - Command, interactive, etc
-- Write to disk
+- `nix develop` only supports Bash
+- You want to use `<shell>`
+- Advised to `nix develop -c exec <shell>`
+- WRONG
+  - Shell's RC files will run _after_ Nix setup
+  - All kinds of shenanigans can happen
 
 ---
 
@@ -398,32 +273,11 @@ $ echo $out
 
 ---
 
-# Append `shellHook`
+# Garbage collection
 
-```
-eval "${shellHook}"
-```
-
----
-
-# Handling different modes
-
-- Interactive
-  - Prepend `source ~/.bashrc`
-  - All Nix stuff runs _after_ `.bashrc`
-- Command
-  - Append `exec <args>`
-
----
-
-# "Just exec your shell"
-
-- `nix develop` only supports Bash
-- You want to use `<shell>`
-- Advised to `nix develop -c exec <shell>`
-- WRONG
-  - Shell's RC files will run _after_ Nix setup
-  - All kinds of environmental shenanigans can happen
+- Set `NIX_GCROOT` to script path in `nix` process
+- Nix garbage collector uses `/proc` to scan for GC roots in running processes
+  - See `LocalStore::findRuntimeRoots`
 
 ---
 
@@ -436,13 +290,13 @@ PATH=${PATH:-}
 nix_saved_PATH="$PATH"
 ...
 ```
-
 ---
 
 # Write out the shell script
 
 ```bash
-$ nix build --print-out-paths --no-link .#devShells.aarch64-darwin.default
+$ nix build --print-out-paths --no-link \
+ .#devShells.aarch64-darwin.default
 /nix/store/zkh8q1m320573982wvqq68wgcaf50af6-flox-dev
 
 $ cat /nix/store/zkh8q1m320573982wvqq68wgcaf50af6-flox-dev
@@ -454,50 +308,24 @@ nix_saved_PATH="$PATH"
 
 ---
 
-# Garbage collection
-
-- Set `NIX_GCROOT` to script path in `nix` process
-- Nix garbage collector uses `/proc` to scan for GC roots in running processes
-  - See `LocalStore::findRuntimeRoots`
-
----
-
-# What happens when you type `nix develop`?
-
-```mermaid
-flowchart TB
-    subgraph nix
-        B[nix develop] --> C([get derivation])
-        C --> D([get build environment])
-        D --> E([create Bash script])
-        E --> F{{exec Bash script}}
-    end
-    A[user shell] -->|fork| nix
-    nix -->|exec| Bash
-```
-
----
-
-# Run the Bash shell
-
-- Command
-  - `exec bash <startup script>`
-  - Doesn't drop you into an interactive shell if the script is interrupted.
-- Interactive
-  - `exec bash --rcfile <startup script>`
-
----
-
 # [fit] flox
 # [fit] activate
 
 ---
 
-# Solving different problems
+# Different goals
 
 - Same reproducibility as `nix develop`
-- 4 different shells, 2 different closures/modes
+- 4 different shells
+  - Bash, Zsh, Fish, and tcsh
+- 2 different closures
+  - "develop" and "runtime" modes
 - "Immediate" activation
+
+---
+
+# Additional requirements
+
 - Layered activations
 - Share resources between activations
 - Services w/ automatic shutdown on exit
@@ -505,49 +333,11 @@ flowchart TB
 
 ---
 
-# What happens when you run `flox activate`?
-
-```mermaid
-flowchart TB
-    Z@{ shape: cyl, label: "Environment built beforehand" }
-    act[flox-activations]
-    subgraph flox
-        B[flox activate] -->|exec|C['activate' script]
-        C --> D([generic setup])
-        D --> E([start or attach])
-        E --> F([vars, hooks])
-        F --> G([prepare rc file])
-        G --> H([exec user shell])
-    end
-    A[user shell] -->|fork|flox
-    flox -->|exec|I[user shell]
-    state@{ shape: cyl, label: "activation state" }
-    wd[flox-watchdog]
-    services@{ shape: procs, label: "services" }
-```
+![fit](./images/diagrams/flox-activate.png)
 
 ---
 
-# Completely different architecture
-
-- Two different shell hooks
-  - `hook.on-activate`: shell-agnostic setup
-  - `profile.*`: sourced by user shell
-- Start vs. attach
-  - Start does full activation (first time)
-  - Attach replays aliases + env (subsequent activations)
-
----
-
-# Completely different architecture
-
-- Need to keep track of instances of activated envs
-  - `flox-watchdog` -> background process, one per env
-  - activation state -> used for attach
-  - One set of services shared between activations of an env
-- Always possible that we're about to layer activations
-  - `$FLOX_ENV` -> current activation
-  - `$FLOX_ENV_DIRS` -> all activations in this shell
+![fit](./images/diagrams/nix-develop.png)
 
 ---
 
@@ -642,9 +432,52 @@ Executed in   15.99 millis    fish           external
 
 ---
 
-# What happens when you run `flox activate`?
+# Completely different architecture
 
-# DIAGRAM
+- Two different shell hooks
+  - `hook.on-activate`: shell-agnostic setup
+  - `profile.*`: sourced by user shell
+- Start vs. attach
+  - Start does full activation (first time)
+  - Attach replays aliases + env (subsequent activations)
+
+---
+
+# manifest.toml
+
+```toml
+version = 1
+
+[install]
+ripgrep.pkg-path = "ripgrep"
+
+[hook]
+on-activate = '''
+  echo "hello from hook.on-activate"
+'''
+
+[profile]
+fish = '''
+  echo "hello from profile.fish"
+  alias myalias "my alias cmds"
+'''
+```
+
+---
+
+![fit](./images/diagrams/flox-activate.png)
+
+---
+
+# Completely different architecture
+
+- Need to keep track of instances of activated envs
+  - `flox-watchdog` -> background process, one per env
+  - activation state -> used for attach
+  - One set of services shared between activations of an env
+- Always possible that we're about to layer activations
+  - `$FLOX_ENV` -> current activation
+  - `$FLOX_ENV_DIRS` -> all activations in this shell
 
 ---
 
@@ -687,7 +520,7 @@ Executed in   15.99 millis    fish           external
 
 ---
 
-# Weird shit shells do
+# The Abyss
 
 - Bash and Zsh support hieroglyphics
   - `"${@@Q}"`
@@ -696,17 +529,26 @@ Executed in   15.99 millis    fish           external
 
 ---
 
-# Weird shit shells do
+# The Abyss
 
 - tcsh has no equivalent of `"${foo:-}"`
   - (default to empty string if unset or null)
-- Don't tell tcsh to eval a string containing `#`
-  - '`#: Command not found`', etc
-  - Trust me, just don't
 
 ---
 
-# Weird shit shells do
+# The Abyss
+
+- Don't tell tcsh to eval a string containing `#`
+  - Often won't treat it as a comment character
+  - '`#: Command not found`'
+  - Other times comments out the rest of the input
+  - `\n` and `;` don't help
+
+Trust me, just don't
+
+---
+
+# The Abyss
 
 - tcsh sometimes just...won't let you quote something
 
@@ -719,10 +561,15 @@ eval "`cmd "arg"`"
 
 ---
 
-# Weird shit shells do
+# The Abyss
 
 - jk that doesn't work in backticks
 - Use `:Q`
+
+---
+
+# The Abyss
+
 - jk that only works in "new" tcsh versions
 
 ---
@@ -731,14 +578,24 @@ eval "`cmd "arg"`"
 
 ---
 
-# Weird shit shells do
+# The Abyss
 
 - tcsh doesn't have an `IFS` variable
   - Good luck reading `PATH` into an array
 
 ---
 
-# Weird shit shells do
+# The Abyss
+
+- Zsh has both `$fpath` and `$FPATH`
+  - `$fpath` is an array
+  - `$FPATH` is like `$PATH`
+  - Set `$fpath`, all good
+  - Set `$FPATH`, subshells won't load default paths
+
+---
+
+# The Abyss
 
 - Everything is a list/array in Fish
 - As a result, these are printed differently
@@ -749,7 +606,7 @@ eval "`cmd "arg"`"
 
 ---
 
-# Weird shit shells do
+# The Abyss
 
 - Startup files...
   - Zsh has 8
@@ -791,9 +648,7 @@ eval "`cmd "arg"`"
 
 ---
 
-# What happens when you run `flox activate`?
-
-# DIAGRAM
+![fit](./images/diagrams/flox-activate.png)
 
 ---
 
@@ -801,7 +656,7 @@ eval "`cmd "arg"`"
 
 - Implement consistent behavior
 - `N` shell dialects with different:
-  - Quoting rules
+  - Quoting semantics
   - Array support
   - Rules for `source` and `eval`
   - etc
@@ -847,9 +702,7 @@ export MANPATH="my_env/share/man:";
 
 ---
 
-# What happens when you run `flox activate`?
-
-# DIAGRAM
+![fit](./images/diagrams/flox-activate.png)
 
 ---
 
@@ -874,6 +727,37 @@ export MANPATH="my_env/share/man:";
 
 ---
 
+![fit](./images/diagrams/flox-activate.png)
+
+---
+
+# Listening for terminations
+
+- `kill -0`
+  - Doesn't differentiate between running and zombies
+  - Polling is a race condition
+- `tail -f /dev/null --pid <pid>`
+  - Often just uses `kill -0` internally
+- Read `/proc`
+  - Race condition if polled
+
+---
+
+![fit](./images/martin_deluge.jpg)
+
+---
+
+# Solution
+
+- Platform specific APIs
+- `prctl(2)` on Linux
+  - `PR_SET_CHILD_SUBREAPER`
+  - Configure a signal to be delivered when child exits
+- `kqueue` on macOS
+  - Poll a file descriptor for configurable events
+
+---
+
 # Prepare RC file
 
 - Flox _must_ be the last thing that runs
@@ -881,6 +765,7 @@ export MANPATH="my_env/share/man:";
   - Sources user RC file
   - Runs Flox stuff (like `profile.*` scripts)
 - _Very_ annoying for Zsh
+  - Is it interactive/login?
 
 ---
 
